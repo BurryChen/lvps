@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(lv_slam)
+project(lvps)
 
 # -mavx causes a lot of errors!!
 #add_definitions(-std=c++11 -msse -msse2 -msse3 -msse4 -msse4.1 -msse4.2)
@@ -94,8 +94,3 @@ add_subdirectory(src/lidar_odometry)
 ## 3.global_graph(lib&exe) ##
 #############################
 add_subdirectory(src/global_graph)
-
-#############################
-## 3.test(lib&exe) ##
-#############################
-add_subdirectory(test)

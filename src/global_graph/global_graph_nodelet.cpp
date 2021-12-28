@@ -32,10 +32,10 @@
 #include <sensor_msgs/Image.h>
 #include <geographic_msgs/GeoPointStamped.h>
 #include <visualization_msgs/MarkerArray.h>
-#include <lv_slam/FloorCoeffs.h>
+#include <lvps/FloorCoeffs.h>
 
-#include <lv_slam/SaveMap.h>
-#include <lv_slam/DumpGraph.h>
+#include <lvps/SaveMap.h>
+#include <lvps/DumpGraph.h>
 
 #include <nodelet/nodelet.h>
 #include <pluginlib/class_list_macros.h>
@@ -557,7 +557,7 @@ namespace lv_slam
    * @brief received floor coefficients are added to #floor_coeffs_queue
    * @param floor_coeffs_msg
    */
-    void floor_coeffs_callback(const lv_slam::FloorCoeffsConstPtr &floor_coeffs_msg)
+    void floor_coeffs_callback(const lvps::FloorCoeffsConstPtr &floor_coeffs_msg)
     {
       if (floor_coeffs_msg->coeffs.empty())
       {
@@ -616,7 +616,7 @@ namespace lv_slam
       }
 
       auto remove_loc = std::upper_bound(floor_coeffs_queue.begin(), floor_coeffs_queue.end(), latest_keyframe_stamp,
-                                         [=](const ros::Time &stamp, const lv_slam::FloorCoeffsConstPtr &coeffs)
+                                         [=](const ros::Time &stamp, const lvps::FloorCoeffsConstPtr &coeffs)
                                          {
                                            return stamp < coeffs->header.stamp;
                                          });
@@ -975,7 +975,7 @@ namespace lv_slam
    * @param res
    * @return
    */
-    bool dump_service(lv_slam::DumpGraphRequest &req, lv_slam::DumpGraphResponse &res)
+    bool dump_service(lvps::DumpGraphRequest &req, lvps::DumpGraphResponse &res)
     {
       std::lock_guard<std::mutex> lock(main_thread_mutex);
 
@@ -1031,7 +1031,7 @@ namespace lv_slam
    * @param res
    * @return
    */
-    bool save_map_service(lv_slam::SaveMapRequest &req, lv_slam::SaveMapResponse &res)
+    bool save_map_service(lvps::SaveMapRequest &req, lvps::SaveMapResponse &res)
     {
       std::vector<KeyFrameSnapshot::Ptr> snapshot;
 
@@ -1204,7 +1204,7 @@ namespace lv_slam
     // floor_coeffs queue
     double floor_edge_stddev;
     std::mutex floor_coeffs_queue_mutex;
-    std::deque<lv_slam::FloorCoeffsConstPtr> floor_coeffs_queue;
+    std::deque<lvps::FloorCoeffsConstPtr> floor_coeffs_queue;
 
     // for map cloud generation
     double map_cloud_resolution;
