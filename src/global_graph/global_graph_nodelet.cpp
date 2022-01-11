@@ -76,6 +76,7 @@ namespace lv_slam
       private_nh = getPrivateNodeHandle();
 
       // init parameters
+      optimize_end_seq = private_nh.param<int>("optimize_end_seq", -1);
       map_frame_id = private_nh.param<std::string>("map_frame_id", "map");
       odom_frame_id = private_nh.param<std::string>("odom_frame_id", "odom");
       map_cloud_resolution = private_nh.param<double>("map_cloud_resolution", 0.05);
@@ -110,11 +111,11 @@ namespace lv_slam
       // subscribers
       string odom_topic = private_nh.param<std::string>("odom_topic", "/odom");
       odom_sub.reset(new message_filters::Subscriber<nav_msgs::Odometry>(mt_nh, odom_topic, 256));
-      //odom_sub.reset(new message_filters::Subscriber<nav_msgs::Odometry>(mt_nh, "/aft_mapped_to_init_high_frec", 256));
+      // odom_sub.reset(new message_filters::Subscriber<nav_msgs::Odometry>(mt_nh, "/aft_mapped_to_init_high_frec", 256));
       cloud_sub.reset(new message_filters::Subscriber<sensor_msgs::PointCloud2>(mt_nh, "/filtered_points", 256));
       string img_topic = private_nh.param<std::string>("img_topic", "/camera/left/image_raw");
       img_sub.reset(new message_filters::Subscriber<sensor_msgs::Image>(mt_nh, img_topic, 256));
-      //img_sub.reset(new message_filters::Subscriber<sensor_msgs::Image>(mt_nh, "/mynteye/left/image_color", 256));
+      // img_sub.reset(new message_filters::Subscriber<sensor_msgs::Image>(mt_nh, "/mynteye/left/image_color", 256));
       sync2.reset(new message_filters::Synchronizer<MySyncPolicy>(MySyncPolicy(256), *odom_sub, *cloud_sub, *img_sub));
       sync2->registerCallback(boost::bind(&GlobalGraphNodelet::cloud_callback, this, _1, _2, _3));
       imu_sub = nh.subscribe("/gpsimu_driver/imu_data", 1024, &GlobalGraphNodelet::imu_callback, this);
@@ -140,23 +141,23 @@ namespace lv_slam
       double graph_update_interval = private_nh.param<double>("graph_update_interval", 3.0);
       double map_cloud_update_interval = private_nh.param<double>("map_cloud_update_interval", 10.0);
       optimization_timer = mt_nh.createWallTimer(ros::WallDuration(graph_update_interval), &GlobalGraphNodelet::optimization_timer_callback, this);
-      //map_publish_timer = mt_nh.createWallTimer(ros::WallDuration(map_cloud_update_interval), &GlobalGraphNodelet::map_points_publish_timer_callback, this);
+      // map_publish_timer = mt_nh.createWallTimer(ros::WallDuration(map_cloud_update_interval), &GlobalGraphNodelet::map_points_publish_timer_callback, this);
 
       std::cout << "### global_graph init done! " << std::endl;
     }
 
   private:
     /**
-   * @brief received point clouds are pushed to #keyframe_queue
-   * @param odom_msg
-   * @param cloud_msg
-   */
+     * @brief received point clouds are pushed to #keyframe_queue
+     * @param odom_msg
+     * @param cloud_msg
+     */
     void cloud_callback(const nav_msgs::OdometryConstPtr &odom_msg, const sensor_msgs::PointCloud2::ConstPtr &cloud_msg, const sensor_msgs::Image::ConstPtr &img_msg)
     {
       const ros::Time &stamp = odom_msg->header.stamp;
       int seq = odom_msg->header.seq;
-      //std::cout<<seq<<" "<<stamp<<std::endl;
-      Eigen::Isometry3d odom = odom2isometry(odom_msg); //base系在odom系下的变换（map=第一帧keyframe的base,odom2map闭环检测修正值，realtime uodate）
+      // std::cout<<seq<<" "<<stamp<<std::endl;
+      Eigen::Isometry3d odom = odom2isometry(odom_msg); // base系在odom系下的变换（map=第一帧keyframe的base,odom2map闭环检测修正值，realtime uodate）
 
       pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>());
       pcl::fromROSMsg(*cloud_msg, *cloud);
@@ -184,7 +185,7 @@ namespace lv_slam
     //第一关键帧起的累计平移标量
     double accum_d = keyframe_updater->get_accum_distance();
     //KeyFrame::Ptr keyframe(new KeyFrame(stamp, odom, accum_d, cloud));
-    
+
     cv_bridge::CvImageConstPtr cv_ptr = cv_bridge::toCvCopy(img_msg, sensor_msgs::image_encodings::MONO8);
     cv::Mat img = cv_ptr->image.clone();
     std::cout<<"seq added to keyframs:"<<seq<<std::endl;
@@ -206,7 +207,7 @@ namespace lv_slam
         w_img = *img_msg;
         w_seq = seq;
         accum_d = keyframe_updater->get_accum_distance();
-        //std::cout<<seq<<" start "<<cloud->size()<<" "<<w_cloud.size()<<"-----------------------------------------------------------------------"<<std::endl;
+        // std::cout<<seq<<" start "<<cloud->size()<<" "<<w_cloud.size()<<"-----------------------------------------------------------------------"<<std::endl;
       }
       else if (!keyframe_updater->is_first && keyframe_updater->update(odom))
       {
@@ -239,14 +240,14 @@ namespace lv_slam
         pcl::PointCloud<PointT>::Ptr transformed(new pcl::PointCloud<PointT>());
         pcl::transformPointCloud(*cloud, *transformed, (w_odom.inverse() * odom).matrix());
         w_cloud += *transformed;
-        //std::cout<<seq<<" "<<transformed->size()<<" "<<w_cloud.size()<<"-----------------------------------------------------------------------"<<std::endl;
+        // std::cout<<seq<<" "<<transformed->size()<<" "<<w_cloud.size()<<"-----------------------------------------------------------------------"<<std::endl;
       }
     }
 
     /**
-   * @brief this method adds all the keyframes in #keyframe_queue to the pose graph (odometry edges)
-   * @return if true, at least one keyframe was added to the pose graph
-   */
+     * @brief this method adds all the keyframes in #keyframe_queue to the pose graph (odometry edges)
+     * @return if true, at least one keyframe was added to the pose graph
+     */
     bool flush_keyframe_queue()
     {
       std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
@@ -271,7 +272,7 @@ namespace lv_slam
 
         // add pose node
         Eigen::Isometry3d odom = odom2map * keyframe->odom;
-        keyframe->node = graph_slam->add_se3_node(odom); //map系下pose
+        keyframe->node = graph_slam->add_se3_node(odom); // map系下pose
         keyframe_hash[keyframe->stamp] = keyframe;
 
         // fix the first node
@@ -339,9 +340,9 @@ namespace lv_slam
     }
 
     /**
-   * @brief received gps data is added to #gps_queue
-   * @param gps_msg
-   */
+     * @brief received gps data is added to #gps_queue
+     * @param gps_msg
+     */
     void gps_callback(const geographic_msgs::GeoPointStampedPtr &gps_msg)
     {
       std::lock_guard<std::mutex> lock(gps_queue_mutex);
@@ -350,9 +351,9 @@ namespace lv_slam
     }
 
     /**
-   * @brief
-   * @return
-   */
+     * @brief
+     * @return
+     */
     bool flush_gps_queue()
     {
       std::lock_guard<std::mutex> lock(gps_queue_mutex);
@@ -554,9 +555,9 @@ namespace lv_slam
     }
 
     /**
-   * @brief received floor coefficients are added to #floor_coeffs_queue
-   * @param floor_coeffs_msg
-   */
+     * @brief received floor coefficients are added to #floor_coeffs_queue
+     * @param floor_coeffs_msg
+     */
     void floor_coeffs_callback(const lvps::FloorCoeffsConstPtr &floor_coeffs_msg)
     {
       if (floor_coeffs_msg->coeffs.empty())
@@ -569,9 +570,9 @@ namespace lv_slam
     }
 
     /**
-   * @brief this methods associates floor coefficients messages with registered keyframes, and then adds the associated coeffs to the pose graph
-   * @return if true, at least one floor plane edge is added to the pose graph
-   */
+     * @brief this methods associates floor coefficients messages with registered keyframes, and then adds the associated coeffs to the pose graph
+     * @return if true, at least one floor plane edge is added to the pose graph
+     */
     bool flush_floor_queue()
     {
       std::lock_guard<std::mutex> lock(floor_coeffs_queue_mutex);
@@ -626,9 +627,9 @@ namespace lv_slam
     }
 
     /**
-   * @brief generate map point cloud and publish it
-   * @param event
-   */
+     * @brief generate map point cloud and publish it
+     * @param event
+     */
     void map_points_publish_timer_callback(const ros::WallTimerEvent &event)
     {
       if (!map_points_pub.getNumSubscribers())
@@ -663,9 +664,9 @@ namespace lv_slam
     }
 
     /**
-   * @brief this methods adds all the data in the queues to the pose graph, and then optimizes the pose graph
-   * @param event
-   */
+     * @brief this methods adds all the data in the queues to the pose graph, and then optimizes the pose graph
+     * @param event
+     */
     void optimization_timer_callback(const ros::WallTimerEvent &event)
     {
       std::lock_guard<std::mutex> lock(main_thread_mutex);
@@ -688,40 +689,54 @@ namespace lv_slam
         return;
       }
 
+      bool is_optimize = true;
+      Eigen::Isometry3d trans;
       // loop detection
       std::vector<Loop::Ptr> loops = loop_detector->detect(keyframes, new_keyframes, *graph_slam);
       for (const auto &loop : loops)
       {
         Eigen::Isometry3d relpose(loop->relative_pose.cast<double>());
         Eigen::MatrixXd information_matrix = inf_calclator->calc_information_matrix(loop->key1->cloud, loop->key2->cloud, relpose);
+
+        std::cout << "loop: seq=" << loop->key1->seq << std::endl;
+        if (optimize_end_seq != -1 && loop->key1->seq > optimize_end_seq)
+        {
+          std::cout << "positioning_with_prior_map" << std::endl;
+          is_optimize = false;
+          trans = loop->key1->odom * (loop->key2->odom * relpose).inverse();
+        }
         auto edge = graph_slam->add_se3_edge(loop->key1->node, loop->key2->node, relpose, information_matrix);
         graph_slam->add_robust_kernel(edge, private_nh.param<std::string>("loop_closure_edge_robust_kernel", "NONE"), private_nh.param<double>("loop_closure_edge_robust_kernel_size", 1.0));
       }
 
-      //local 关键帧加入到global关键帧中
-      std::copy(new_keyframes.begin(), new_keyframes.end(), std::back_inserter(keyframes));
-      new_keyframes.clear();
-
-      // optimize the pose graph
-      int num_iterations = private_nh.param<int>("g2o_solver_num_iterations", 1024);
-      graph_slam->optimize(num_iterations);
-
-      //BA is for all keyframes, 把误差均分给每一个node,为了保证相对关系会造成绝对pose的偏差。以first keyframe为基准，消除绝对偏差。
-      auto trans_absolute = (keyframes.front()->node->estimate()).inverse();
-      for (auto keyframe : keyframes)
+      if (is_optimize)
       {
-        keyframe->node->setEstimate(trans_absolute * keyframe->node->estimate());
+        // local 关键帧加入到global关键帧中
+        std::copy(new_keyframes.begin(), new_keyframes.end(), std::back_inserter(keyframes));
+        new_keyframes.clear();
+
+        // optimize the pose graph
+        int num_iterations = private_nh.param<int>("g2o_solver_num_iterations", 1024);
+        graph_slam->optimize(num_iterations);
+
+        // BA is for all keyframes, 把误差均分给每一个node,为了保证相对关系会造成绝对pose的偏差。以first keyframe为基准，消除绝对偏差。
+        auto trans_absolute = (keyframes.front()->node->estimate()).inverse();
+        for (auto keyframe : keyframes)
+        {
+          keyframe->node->setEstimate(trans_absolute * keyframe->node->estimate());
+        }
       }
 
       // publish tf,tf_odom2map
       const auto &keyframe = keyframes.back();
-      Eigen::Isometry3d trans = keyframe->node->estimate() * keyframe->odom.inverse(); //tf_base2map*tf_base2odom.inverse()=tf_odom2map
+      if (is_optimize)
+        trans = keyframe->node->estimate() * keyframe->odom.inverse(); // tf_base2map*tf_base2odom.inverse()=tf_odom2map
       trans_odom2map_mutex.lock();
       trans_odom2map = trans.matrix().cast<float>(); //两种不同类型的Eigen矩阵相加，或者赋值，需要用到cast函数：
       trans_odom2map_mutex.unlock();
 
-      //if(map_points_pub.getNumSubscribers()) {//如果有结果mapping订阅就发布
-      if (1)
+      // if(map_points_pub.getNumSubscribers()) {//如果有结果mapping订阅就发布
+      if (is_optimize)
       { //无结果mapping订阅也发布
         std::vector<KeyFrameSnapshot::Ptr> snapshot(keyframes.size());
         std::transform(keyframes.begin(), keyframes.end(), snapshot.begin(),
@@ -750,7 +765,7 @@ namespace lv_slam
       }
 
       if (odom2map_pub.getNumSubscribers())
-      { //pub tf_odom2map
+      { // pub tf_odom2map
         geometry_msgs::TransformStamped ts = matrix2transform(keyframe->stamp, trans.matrix().cast<float>(), map_frame_id, odom_frame_id);
         odom2map_pub.publish(ts);
       }
@@ -763,10 +778,10 @@ namespace lv_slam
     }
 
     /**
-   * @brief create visualization marker
-   * @param stamp
-   * @return
-   */
+     * @brief create visualization marker
+     * @param stamp
+     * @return
+     */
     visualization_msgs::MarkerArray create_marker_array(const ros::Time &stamp) const
     {
       visualization_msgs::MarkerArray markers;
@@ -970,11 +985,11 @@ namespace lv_slam
     }
 
     /**
-   * @brief dump all data to the current directory
-   * @param req
-   * @param res
-   * @return
-   */
+     * @brief dump all data to the current directory
+     * @param req
+     * @param res
+     * @return
+     */
     bool dump_service(lvps::DumpGraphRequest &req, lvps::DumpGraphResponse &res)
     {
       std::lock_guard<std::mutex> lock(main_thread_mutex);
@@ -1026,11 +1041,11 @@ namespace lv_slam
     }
 
     /**
-   * @brief save map data as pcd
-   * @param req
-   * @param res
-   * @return
-   */
+     * @brief save map data as pcd
+     * @param req
+     * @param res
+     * @return
+     */
     bool save_map_service(lvps::SaveMapRequest &req, lvps::SaveMapResponse &res)
     {
       std::vector<KeyFrameSnapshot::Ptr> snapshot;
@@ -1069,10 +1084,10 @@ namespace lv_slam
     }
 
     /**
-   * @brief save pose
-   * @param directory
-   * @return
-   */
+     * @brief save pose
+     * @param directory
+     * @return
+     */
     void save_pose(std::string directory)
     {
       // load calib  file
@@ -1091,7 +1106,7 @@ namespace lv_slam
         Eigen::Isometry3d pose = keyframes[i]->node->estimate();
         // pose:the pose of left camera coordinate system in the i'th frame with respect to the first(=0th) frame
         Eigen::Matrix4d data = (tf_velo2cam * pose * tf_velo2cam.inverse()).matrix();
-        //std::cout<<"pose=\n"<<pose.matrix()<<std::endl;
+        // std::cout<<"pose=\n"<<pose.matrix()<<std::endl;
         pose_keyframe_ofs << boost::format("%le %le %le %le %le %le %le %le %le %le %le %le\n") % data(0, 0) % data(0, 1) % data(0, 2) % data(0, 3) % data(1, 0) % data(1, 1) % data(1, 2) % data(1, 3) % data(2, 0) % data(2, 1) % data(2, 2) % data(2, 3);
       }
 
@@ -1118,13 +1133,13 @@ namespace lv_slam
           Eigen::Quaterniond q0 = Eigen::Quaterniond::Identity();
           Eigen::Quaterniond q1 = Eigen::Quaterniond(d_pose_odom.linear().matrix());
           Eigen::Quaterniond q_slerp = q0.slerp(seq1 - seq0, q1);
-          //std::cout<<"d_pose_odom "<<q_slerp.coeffs().transpose()<<std::endl<<d_pose_odom.matrix()<<std::endl;
+          // std::cout<<"d_pose_odom "<<q_slerp.coeffs().transpose()<<std::endl<<d_pose_odom.matrix()<<std::endl;
           d_pose_odom.linear() = q_slerp.toRotationMatrix();
           d_pose_odom.translation() *= 1.0 / (seq1 - seq0);
         }
-        //d_pose_odom=Eigen::Isometry3d::Identity();
-        //std::cout<<"key/scan:"<<seq0<<"/"<<seq1<<std::endl;
-        //std::cout<<"d_pose_odom after interpolation "<<std::endl<<d_pose_odom.matrix()<<std::endl;
+        // d_pose_odom=Eigen::Isometry3d::Identity();
+        // std::cout<<"key/scan:"<<seq0<<"/"<<seq1<<std::endl;
+        // std::cout<<"d_pose_odom after interpolation "<<std::endl<<d_pose_odom.matrix()<<std::endl;
         for (int j = seq0; j < seq1; j++)
         {
           Eigen::Isometry3d pose_new;
@@ -1133,7 +1148,7 @@ namespace lv_slam
             pose_new = kf_pose * pose_s2k;
           else
             pose_new = kf_pose * pose_s2k * d_pose_odom;
-          //std::cout<<"pose_new "<<std::endl<<pose_new.matrix()<<std::endl;
+          // std::cout<<"pose_new "<<std::endl<<pose_new.matrix()<<std::endl;
           Eigen::Matrix4d data = (tf_velo2cam * pose_new * tf_velo2cam.inverse()).matrix();
           pose_global_ofs << boost::format("%le %le %le %le %le %le %le %le %le %le %le %le\n") % data(0, 0) % data(0, 1) % data(0, 2) % data(0, 3) % data(1, 0) % data(1, 1) % data(1, 2) % data(1, 3) % data(2, 0) % data(2, 1) % data(2, 2) % data(2, 3);
         }
@@ -1166,7 +1181,7 @@ namespace lv_slam
     std::string map_frame_id;
     std::string odom_frame_id;
 
-    std::mutex trans_odom2map_mutex; //h互斥锁
+    std::mutex trans_odom2map_mutex; // h互斥锁
     Eigen::Matrix4f trans_odom2map;
     ros::Publisher odom2map_pub;
 
@@ -1216,6 +1231,7 @@ namespace lv_slam
     // all the below members must be accessed after locking main_thread_mutex
     std::mutex main_thread_mutex;
 
+    int optimize_end_seq;
     int max_keyframes_per_update;
     std::deque<KeyFrame::Ptr> new_keyframes; //双端队列
 
@@ -1232,7 +1248,7 @@ namespace lv_slam
 
     std::unique_ptr<InformationMatrixCalculator> inf_calclator;
 
-    //pose file with KITTI calibration tf_cal
+    // pose file with KITTI calibration tf_cal
     FILE *fp;
     Eigen::Isometry3d tf_velo2cam;
     std::map<int, Eigen::Isometry3d> odoms;

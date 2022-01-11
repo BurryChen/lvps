@@ -125,25 +125,23 @@ rosbag play --clock './src/lvps/data/velo_img_04.bag'    -r 1.0
 
 ```
     roslaunch lvps dlo_lfa_kitti.launch  calib_file:='/home/chenshoubin/code_ws/lvps_ws/src/lvps/config/kitti_calib/calib04-12.txt'   odom_file:='/home/chenshoubin/code_ws/lvps_ws/src/lvps/data/kitti_lv_dlo_lfa/dlo_lfa_global/data/KITTI_04_odom.txt'  seq:=04  lfa_output_path:='/home/chenshoubin/code_ws/lvps_ws/src/lvps/data/kitti_lv_dlo_lfa'
-    rosbag play --clock '/home/chenshoubin/data/data_source_KITTI/velostereobag/velo_img_04.bag'    -r 1.0
+    rosbag play --clock ./data/velo_img_04.bag -r 1.0
 
     #cpp ./evaluate_odometry_seq '/home/chenshoubin/data/lvps_kitti/kitti_lv_dlo_lfa/aft_mapped_to_init_high_frec_file' 04
     #seq 04 (t_avg,r_avg)=(0.003118,0.000026)
 ```
 
 ### 4.2 dlo_lfa_ggo_kitti
-```
-# realtive path
-roslaunch lvps dlo_lfa_ggo_kitti.launch  calib_file:='$(find lvps)/config/kitti_calib/calib04-12.txt'     odom_file:='$(find lvps)/data/kitti_lv_dlo_lfa_ggo/dlo_lfa_global/data/KITTI_04_odom.txt' seq:=04  lfa_output_path:='$(find lvps)/data/kitti_lv_dlo_lfa_ggo'
-rosbag play --clock './src/lvps/data/velo_img_04.bag'    -r 1.0
-```
 
 ```
-    roslaunch lvps dlo_lfa_ggo_kitti.launch  calib_file:='/home/chenshoubin/lvps_ws/src/lvps/config/kitti_calib/calib04-12.txt'     odom_file:='/home/chenshoubin/data/lvps_kitti/kitti_lv_dlo_lfa_ggo/dlo_lfa_global/data/KITTI_04_odom.txt' seq:=04  lfa_output_path:='/home/chenshoubin/data/lvps_kitti/kitti_lv_dlo_lfa_ggo'
-    rosbag play --clock '/home/chenshoubin/data/data_source_KITTI/velostereobag/velo_img_04.bag'    -r 1.0
+    roslaunch lvps dlo_lfa_ggo_kitti.launch  calib_file:='/home/chenshoubin/code_ws/lvps_ws/src/lvps/config/kitti_calib/calib04-12.txt'   odom_file:='/home/chenshoubin/code_ws/lvps_ws/src/lvps/data/kitti_lv_dlo_lfa/dlo_lfa_global/data/KITTI_05_odom.txt'  seq:=05  lfa_output_path:='/home/chenshoubin/code_ws/lvps_ws/src/lvps/data/kitti_lv_dlo_lfa' > 05_no_prior_map.log
+
+    roslaunch lvps dlo_lfa_ggo_kitti.launch  calib_file:='/home/chenshoubin/code_ws/lvps_ws/src/lvps/config/kitti_calib/calib04-12.txt'   odom_file:='/home/chenshoubin/code_ws/lvps_ws/src/lvps/data/kitti_lv_dlo_lfa/dlo_lfa_global/data/KITTI_05_odom.txt'  seq:=05  lfa_output_path:='/home/chenshoubin/code_ws/lvps_ws/src/lvps/data/kitti_lv_dlo_lfa' optimize_end_seq:=2400 > 05_prior_map.log
     
-    rosservice call /global_graph/dump "destination: '/home/chenshoubin/data/kitti_lv_dlo_lfa_ggo/dlo_lfa_global/data/dump_06'  "
-    rosservice call /global_graph/save_map "{resolution: 0.05, destination: '/home/chenshoubin/data/kitti_lv_dlo_lfa_ggo/dlo_lfa_global/data/dump_06/map.pcd'}"
+    rosbag play --clock ./data/velo_img_05.bag -r 1.0
+    
+    rosservice call /global_graph/dump "destination: /home/chenshoubin/code_ws/lvps_ws/src/lvps/data/kitti_lv_dlo_lfa_ggo/dlo_lfa_global/data/dump_05"
+    rosservice call /global_graph/save_map "{resolution: 0.05, destination: /home/chenshoubin/code_ws/lvps_ws/src/lvps/data/kitti_lv_dlo_lfa_ggo/dlo_lfa_global/data/dump_05/map.pcd}"
 
     evo_traj kitti '/home/chenshoubin/data/lvps_kitti/kitti_lv_dlo_lfa_ggo/dlo_lfa_global/data/KITTI_04_odom.txt' '/home/chenshoubin/data/lvps_kitti/kitti_lv_dlo_lfa_ggo/aft_mapped_to_init_high_frec_file/data/KITTI_04_odom.txt'   '/home/chenshoubin/data/lvps_kitti/kitti_lv_dlo_lfa_ggo/dlo_lfa_global/data/dump_04/ggo_wf_odom.txt'      --plot_mode=xz  --ref='/home/chenshoubin/data/data_source_KITTI/gt/04.txt'   -p --save_plot  '/home/chenshoubin/data/lvps_kitti/kitti_lv_dlo_lfa_ggo/dlo_lfa_global/data/dump_04/ggo_wf_odom.pdf'
 ```

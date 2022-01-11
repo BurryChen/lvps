@@ -9,6 +9,7 @@
   <arg name="enable_gps" default="false" />
   <arg name="enable_imu_acc" default="false" />
   <arg name="enable_imu_ori" default="false" />
+  <arg name="optimize_end_seq" default="-1" />
   <!--<arg name="odom_file" value="/home/whu/data/graph_fusion/KITTI_0X_odom.txt" /-->
 
   <!-- transformation between lidar and base_link 
@@ -82,6 +83,7 @@
 
   <!-- global_graph_nodelet -->
   <node pkg="nodelet" type="nodelet" name="global_graph_nodelet" args="load lv_slam/GlobalGraphNodelet $(arg nodelet_manager)">
+    <param name="optimize_end_seq" value="$(arg optimize_end_seq)" />
     <!-- io settings -->
     <param name="calib_file" type="string" value="$(arg calib_file)" /> 
     <!-- topic settings -->
@@ -105,7 +107,7 @@
     <param name="accum_distance_thresh" value="100.0" />      <!-- 这里指的是当前帧累计距离（odometry）与临近帧累计距离之差，组成的环长要大于该阈值-->
     <param name="min_edge_interval" value="50.0" />          <!-- 两个环之间的间隔要大于该阈值-->
     <param name="fitness_score_thresh" value="2.0" />         <!-- 闭环帧匹配得分，连接点欧式距离error均值，分值越小越优-->
-    <param name="voc_path" value="$(find lv_slam)/config/vocab_larger.yml.gz" />
+    <param name="voc_path" value="$(find lvps)/config/vocab_larger.yml.gz" />
     <!-- scan matching params -->
     <param name="registration_method" value="NDT_OMP" />       <!-- 闭环帧匹配方法-->
     <param name="ndt_resolution" value="1.0" />                 <!-- 闭环帧匹配分辨率-->
@@ -146,11 +148,11 @@
     <param name="map_cloud_resolution" value="0.5" />          <!--全局地图的分辨率的分辨率-->
   </node>
 
-  <node pkg="lv_slam" type="map2odom_publisher.py" name="map2odom_publisher" />
+  <node pkg="lvps" type="map2odom_publisher.py" name="map2odom_publisher" />
   
   <!-- -->
   <group if="$(arg rviz)">
-    <node launch-prefix="nice" pkg="rviz" type="rviz" name="rviz" args="-d $(find lv_slam)/rviz/global_graph.rviz" />
+    <node launch-prefix="nice" pkg="rviz" type="rviz" name="rviz" args="-d $(find lvps)/rviz/global_graph.rviz" />
   </group>
   
    
